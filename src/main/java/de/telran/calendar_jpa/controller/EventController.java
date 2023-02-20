@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@RequestMapping("/api/v1/events")
 public class EventController {
     private final EventService eventService;
 
@@ -20,7 +21,7 @@ public class EventController {
     }
 
     //Получение события по ID
-    @GetMapping("/api/v1/get/{id}")
+    @GetMapping("/{id}")
     ResponseEntity<?> getEventById(@PathVariable Long id) {
         Optional<Event> result = eventService.findById(id);
         if (result.isPresent()){
@@ -31,25 +32,31 @@ public class EventController {
     }
 
     //Получение списка всех событий
-    @GetMapping("/api/v1/getall")
+    @GetMapping()
     List<Event> getAllEvent() {
         return eventService.findAll();
     }
 
     //Создание нового события или изменение существующего
-    @PostMapping("/api/v1/create")
+    @PostMapping()
     Event createEvent(@RequestBody Event newEvent) {
         return eventService.save(newEvent);
     }
 
     //Обновление существующего события
-    @PutMapping("/api/v1/update/{id}")
-    public Event updateEvent(@PathVariable Long id, @RequestBody Event newEvent) {
-        return eventService.save(newEvent);
+    @PutMapping("/{id}")
+    ResponseEntity<?> updateEvent(@PathVariable Long id, @RequestBody Event newEvent) {
+        //Если событие есть в базе, то обновить его
+        if (eventService.existsById(id)){
+            Event event=eventService.save(newEvent);
+            return ResponseEntity.ok(event);
+        }
+        //Если события нет, то вернуть "NOT_FOUND"
+        else return ResponseEntity.notFound().build();
     }
 
     //Удаление события по ID
-    @DeleteMapping(value = "/api/v1/delete/{id}")
+    @DeleteMapping(value = "/{id}")
     ResponseEntity<?> deleteEvent(@PathVariable Long id) {
         //Если событие есть в базе, то удалить его
         if (eventService.existsById(id)){
