@@ -5,8 +5,12 @@ import de.telran.calendar_jpa.service.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,24 +28,47 @@ public class EventController {
     @GetMapping("/{id}")
     ResponseEntity<?> getEventById(@PathVariable Long id) {
         Optional<Event> result = eventService.findById(id);
+        //Если событие есть, то вернуть его
         if (result.isPresent()){
             Event event = result.get();
             return ResponseEntity.ok(event);
         }
+        //Если события нет, то вернуть "NOT_FOUND"
         else return ResponseEntity.notFound().build();
     }
 
     //Получение списка всех событий
     @GetMapping()
-    List<Event> getAllEvent() {
-        return eventService.findAll();
+    ResponseEntity<?> getAllEvent() {
+        //Если список событий не пустой, то вернуть его
+        List<Event> eventList = eventService.findAll();
+        if (!eventList.isEmpty()){
+            return ResponseEntity.ok(eventList);
+        }
+        //Если список событий пустой, то вернуть "NOT_FOUND"
+        else return ResponseEntity.notFound().build();
     }
 
     //Создание нового события или изменение существующего
     @PostMapping()
-    Event createEvent(@RequestBody Event newEvent) {
-        return eventService.save(newEvent);
-    }
+    ResponseEntity<?> createEvent(@RequestBody Event newEvent) {
+        //Если новое событие добавлено, то вернуть код 201 и location
+        Event event = eventService.save(newEvent);
+        if (event != null){
+            URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                    .path("/{id}")
+                    .buildAndExpand(event.getId())
+                    .toUri();
+            return ResponseEntity.created(location).build();
+        }
+        //Если новое событие не добавлено, то вернуть "500 Internal Server Error"
+        else {
+            return ResponseEntity.internalServerError().build();
+        }
+//        Варианты ответов
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        return ResponseEntity.status(HttpStatus.CREATED).body(savedItem);
+  }
 
     //Обновление существующего события
     @PutMapping("/{id}")
@@ -73,17 +100,6 @@ public class EventController {
 
 
 }
-
-
-
-
-//    @GetMapping("/api/v1/getall")
-//    ResponseEntity<List<Event>> getAll() {
-//        List<Event> eventList = eventService.findAll();
-//        return !eventList.isEmpty()
-//                ? new ResponseEntity<>(eventList, HttpStatus.OK)
-//                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//    }
 
 
 /*
