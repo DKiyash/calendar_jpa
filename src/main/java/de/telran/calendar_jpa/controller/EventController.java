@@ -39,7 +39,7 @@ public class EventController {
 
     //Получение списка всех событий
     @GetMapping()
-    ResponseEntity<?> getAllEvent() {
+    ResponseEntity<?> getAllEvents() {
         //Если список событий не пустой, то вернуть его
         List<Event> eventList = eventService.findAll();
         if (!eventList.isEmpty()){
